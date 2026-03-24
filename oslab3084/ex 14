@@ -1,0 +1,172 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_BLOCKS 50
+
+int memory[MAX_BLOCKS] = {0}; // 0 = free, 1 = allocated
+
+// Indexed Allocation Structure
+typedef struct {
+    int indexBlock;
+    int blocks[MAX_BLOCKS];
+    int blockCount;
+} IndexedFile;
+
+// Linked Allocation Structure
+typedef struct {
+    int startBlock;
+    int blocks[MAX_BLOCKS];
+    int blockCount;
+} LinkedFile;
+
+// ---------------- Sequential Allocation ----------------
+void sequentialAllocation(int start, int size) {
+    int free = 1;
+
+    if (start + size > MAX_BLOCKS) {
+        printf("Out of memory bounds!\n");
+        return;
+    }
+
+    for (int i = start; i < start + size; i++) {
+        if (memory[i] == 1) {
+            free = 0;
+            break;
+        }
+    }
+
+    if (free) {
+        for (int i = start; i < start + size; i++)
+            memory[i] = 1;
+
+        printf("File allocated from block %d to %d\n", start, start + size - 1);
+    } else {
+        printf("Not enough contiguous space!\n");
+    }
+}
+
+// ---------------- Indexed Allocation ----------------
+void indexedAllocation(IndexedFile *file) {
+    printf("Enter index block: ");
+    scanf("%d", &file->indexBlock);
+
+    if (memory[file->indexBlock] == 1) {
+        printf("Index block already allocated!\n");
+        return;
+    }
+
+    printf("Enter number of blocks: ");
+    scanf("%d", &file->blockCount);
+
+    int count = 0;
+
+    for (int i = 0; i < MAX_BLOCKS && count < file->blockCount; i++) {
+        if (memory[i] == 0 && i != file->indexBlock) {
+            file->blocks[count++] = i;
+            memory[i] = 1;
+        }
+    }
+
+    if (count < file->blockCount) {
+        printf("Not enough free blocks!\n");
+        return;
+    }
+
+    memory[file->indexBlock] = 1;
+
+    printf("File allocated with index block %d\nBlocks: ", file->indexBlock);
+    for (int i = 0; i < file->blockCount; i++)
+        printf("%d ", file->blocks[i]);
+    printf("\n");
+}
+
+// ---------------- Linked Allocation ----------------
+void linkedAllocation(LinkedFile *file) {
+    printf("Enter start block: ");
+    scanf("%d", &file->startBlock);
+
+    if (memory[file->startBlock] == 1) {
+        printf("Start block already allocated!\n");
+        return;
+    }
+
+    printf("Enter number of blocks: ");
+    scanf("%d", &file->blockCount);
+
+    int count = 0;
+
+    for (int i = 0; i < MAX_BLOCKS && count < file->blockCount; i++) {
+        if (memory[i] == 0 && i != file->startBlock) {
+            file->blocks[count++] = i;
+            memory[i] = 1;
+        }
+    }
+
+    if (count < file->blockCount) {
+        printf("Not enough free blocks!\n");
+        return;
+    }
+
+    memory[file->startBlock] = 1;
+
+    printf("File allocated starting at block %d\nLinked blocks: ", file->startBlock);
+    for (int i = 0; i < file->blockCount; i++)
+        printf("%d -> ", file->blocks[i]);
+    printf("NULL\n");
+}
+
+// ---------------- Display Memory ----------------
+void displayMemory() {
+    printf("\nMemory Status:\n");
+    for (int i = 0; i < MAX_BLOCKS; i++) {
+        printf("%d ", memory[i]);
+    }
+    printf("\n");
+}
+
+// ---------------- Main ----------------
+int main() {
+    int choice, start, size;
+    IndexedFile indexedFile;
+    LinkedFile linkedFile;
+
+    while (1) {
+        printf("\n--- File Allocation Strategies ---\n");
+        printf("1. Sequential Allocation\n");
+        printf("2. Indexed Allocation\n");
+        printf("3. Linked Allocation\n");
+        printf("4. Display Memory\n");
+        printf("5. Exit\n");
+        printf("Enter choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                printf("Enter start block and size: ");
+                scanf("%d %d", &start, &size);
+                sequentialAllocation(start, size);
+                break;
+
+            case 2:
+                indexedAllocation(&indexedFile);
+                break;
+
+            case 3:
+                linkedAllocation(&linkedFile);
+                break;
+
+            case 4:
+                displayMemory();
+                break;
+
+            case 5:
+                printf("Exiting...\n");
+                return 0;
+
+            default:
+                printf("Invalid choice!\n");
+        }
+    }
+
+    return 0;
+}

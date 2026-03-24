@@ -1,0 +1,48 @@
+#include <stdio.h>
+#include <sys/shm.h>
+#include <sys/ipc.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main()
+{
+    int child, shmid, i;
+    char *shmptr;
+
+    child = fork();
+
+    if (child > 0)
+    {
+        shmid = shmget(2041, 32, 0666 | IPC_CREAT);
+        shmptr = shmat(shmid, NULL, 0);
+
+        printf("\nPARENT PROCESS WRITING\n");
+
+        for (i = 0; i < 10; i++)
+        {
+            shmptr[i] = 'a' + i;
+            putchar(shmptr[i]);
+        }
+
+        shmptr[10] = '\0';
+
+        wait(NULL);
+
+        shmdt(shmptr);
+    }
+    else
+    {
+        shmid = shmget(2041, 32, 0666);
+        shmptr = shmat(shmid, NULL, 0);
+
+        printf("\nCHILD PROCESS READING\n");
+
+        for (i = 0; i < 10; i++)
+            putchar(shmptr[i]);
+
+        shmdt(shmptr);
+        shmctl(shmid, IPC_RMID, NULL);
+    }
+
+    return 0;
+}
